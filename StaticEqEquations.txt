@@ -1,0 +1,31 @@
+
+& F_{\mathrm{ext},\mathrm{h1}}+F_{\mathrm{h1}}=F_{\mathrm{k1}} \\
+& F_{\mathrm{a1}}=F_{\mathrm{ext},\mathrm{k1}}+F_{\mathrm{k1}} \\
+& F_{\mathrm{a1}}+F_{\mathrm{ext},\mathrm{a1}}=F_{\mathrm{t1}} \\
+& F_{\mathrm{ext},\mathrm{t1}}+F_{\mathrm{t1}}=F_{\mathrm{p1}} \\
+& F_{\mathrm{c1}}=F_{\mathrm{ext},\mathrm{p1}}+F_{\mathrm{p1}} \\
+& F_{\mathrm{ext},\mathrm{h2}}+F_{\mathrm{h2}}=F_{\mathrm{k2}}+g\,m_{h,k} \\
+& F_{\mathrm{a2}}+g\,m_{k,a}=F_{\mathrm{ext},\mathrm{k2}}+F_{\mathrm{k2}} \\
+& F_{\mathrm{a2}}+F_{\mathrm{ext},\mathrm{a2}}=F_{\mathrm{t2}}+g\,m_{a,t} \\
+& F_{\mathrm{ext},\mathrm{t2}}+F_{\mathrm{t2}}=F_{\mathrm{p2}}+g\,m_{t,p} \\
+& F_{\mathrm{c2}}+g\,m_{p,c}=F_{\mathrm{ext},\mathrm{p2}}+F_{\mathrm{p2}} \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 0 \\
+& 2\,M_{\mathrm{ext},\mathrm{h3}}+2\,M_{\mathrm{h3}}+F_{\mathrm{h1}}\,L_{h,k}\,\sin\left(\theta _{h}\right)+F_{\mathrm{k1}}\,L_{h,k}\,\sin\left(\theta _{h}\right)=2\,M_{\mathrm{k3}}+F_{\mathrm{h2}}\,L_{h,k}\,\cos\left(\theta _{h}\right)+F_{\mathrm{k2}}\,L_{h,k}\,\cos\left(\theta _{h}\right) \\
+& 2\,M_{\mathrm{a3}}+F_{\mathrm{a2}}\,L_{k,a}\,\cos\left(\theta _{h}+\theta _{k}\right)+F_{\mathrm{k2}}\,L_{k,a}\,\cos\left(\theta _{h}+\theta _{k}\right)=2\,M_{\mathrm{ext},\mathrm{k3}}+2\,M_{\mathrm{k3}}+F_{\mathrm{a1}}\,L_{k,a}\,\sin\left(\theta _{h}+\theta _{k}\right)+F_{\mathrm{k1}}\,L_{k,a}\,\sin\left(\theta _{h}+\theta _{k}\right) \\
+& 2\,M_{\mathrm{a3}}+2\,M_{\mathrm{ext},\mathrm{a3}}+F_{\mathrm{a1}}\,L_{a,t}\,\sin\left(\theta _{a}+\theta _{h}+\theta _{k}\right)+F_{\mathrm{t1}}\,L_{a,t}\,\sin\left(\theta _{a}+\theta _{h}+\theta _{k}\right)=2\,M_{\mathrm{t3}}+F_{\mathrm{a2}}\,L_{a,t}\,\cos\left(\theta _{a}+\theta _{h}+\theta _{k}\right)+F_{\mathrm{t2}}\,L_{a,t}\,\cos\left(\theta _{a}+\theta _{h}+\theta _{k}\right) \\
+& 2\,M_{\mathrm{ext},\mathrm{t3}}+2\,M_{\mathrm{t3}}+F_{\mathrm{p1}}\,L_{t,p}\,\sin\left(\theta _{a}+\theta _{h}+\theta _{k}+\theta _{t}\right)+F_{\mathrm{t1}}\,L_{t,p}\,\sin\left(\theta _{a}+\theta _{h}+\theta _{k}+\theta _{t}\right)=2\,M_{\mathrm{p3}}+F_{\mathrm{p2}}\,L_{t,p}\,\cos\left(\theta _{a}+\theta _{h}+\theta _{k}+\theta _{t}\right)+F_{\mathrm{t2}}\,L_{t,p}\,\cos\left(\theta _{a}+\theta _{h}+\theta _{k}+\theta _{t}\right) \\
+& 2\,M_{\mathrm{c3}}+F_{\mathrm{c2}}\,L_{p,c}\,\cos\left(\theta _{a}+\theta _{h}+\theta _{k}+\theta _{p}+\theta _{t}\right)+F_{\mathrm{p2}}\,L_{p,c}\,\cos\left(\theta _{a}+\theta _{h}+\theta _{k}+\theta _{p}+\theta _{t}\right)=2\,M_{\mathrm{ext},\mathrm{p3}}+2\,M_{\mathrm{p3}}+F_{\mathrm{c1}}\,L_{p,c}\,\sin\left(\theta _{a}+\theta _{h}+\theta _{k}+\theta _{p}+\theta _{t}\right)+F_{\mathrm{p1}}\,L_{p,c}\,\sin\left(\theta _{a}+\theta _{h}+\theta _{k}+\theta _{p}+\theta _{t}\right) \\
