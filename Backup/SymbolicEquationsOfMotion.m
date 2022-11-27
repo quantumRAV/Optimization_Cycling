@@ -1,5 +1,3 @@
-clc 
-clearvars
 syms t thetaT 
 
 lin_accel_O = sym('lin_accel_O',[3 1]); %acceleration of point O %change all these to symfunmatrix of variable t in order to perform time differentiation
@@ -110,6 +108,18 @@ writelines(textStr,"StaticEqEquations.txt")
 %latex(simplify(staticEqs(30,1)))
 
 
+%% solve system of equations for the reaction forces:
+
+%sumv=reshape(sumFvec,[15 1]);
+%qg=solve(sumv(1:10).',str2sym({'F_a1','F_k2','F_k1','F_a2','F_h1','F_h2','F_t1','F_t2','F_p1','F_p2','F_c1','F_c2'}));  %solve system of equations for the unknown equations
+
+
+totaleqs=[reshape(sumFvec,[15,1]);reshape(sumMoments,[15,1])];
+qg2=solve(totaleqs.',symVec);
+%sol=subs(totaleqs,qg2); %substitute out the reaction forces and moments.
+
+
+
 %% create table to input parameters
 letterDictStruct.FirstLetter=containers.Map(["F","L","M","g","m","theta"],["Force","Length","Moment","gravity","mass","angle"]);
 letterDictStruct.SecondLetter=containers.Map(["a","c","h","k","p","t","ext","1","2","3"],["ankle","crank center","hip","knee","pedal center","toe","external","x axis","y axis", "z axis"]);
@@ -128,29 +138,55 @@ StaticEqs_solved = solve(staticEqs,str2sym(pTable.VarName));
 pTable2 = parmTable((parmTable.SolveSymbolically=="N" & ~isnan(parmTable.Value)),:); %for parameters
 subEqs = subs(StaticEqs_solved,str2sym(pTable2.VarName).',pTable2.Value.');
 
-%create matlab function from symbolic equations
-paramOutputs = fieldnames(subEqs);  %names of the param outputs
-totEqs = sym(zeros(length(paramOutputs),1));
+%% read table of parameters
+parmTable = readtable("StaticVarTable.csv");
 
-for j= 1:length(paramOutputs)
+%get variables that are non-zero
+pTable = parmTable(~isnan(parmTable.Value),:);
 
-    totEqs(j) = subEqs.(paramOutputs{j});
+newStaticEqns = simplify(subs(staticEqs,str2sym(pTable.VarName).',pTable.Value.'));
+newStaticEqns = newStaticEqns(find(newStaticEqns~=symtrue)); %get rid of redundant equations
+
+%% solve static equations for reaction forces and torques, give force at the feet
+nSE = newStaticEqns(find(newStaticEqns~=0));  %only get the non zero equations after simplification
+returnSolution =(solve(nSE));
+
+%returnSolution = vpa(returnSolution,5);
 
 
-end
+%% read table of parameters and solve equations
 
-paramNames = parmTable.VarName(parmTable.SolveSymbolically=="P")
-JointForceTorque_Fcn = matlabFunction(totEqs,'Vars',{'F_t1','F_t2','theta_h','theta_k','theta_a'})
+%convert matrix to table
+KautzDataStruct = load("output.mat");
+KautzData = KautzDataStruct.combined;
+KautzData(3,:) = -KautzData(1,:) -KautzData(2,:)+KautzData(3,:);  %convert the ankle angles in the convention defined above
+KautzData = array2table(KautzData,'VariableNames',{'theta_h','theta_k','theta_a','f_x','f_y','x','y'});
 
-if false %set to true if you want to regenerate a separate file for calculating joint forces and torques 
-    JointForceTorque_Fcn = matlabFunction(totEqs,'Vars',{'F_t1','F_t2','theta_h','theta_k','theta_a'},'File','JointForceTorque_FileFcn')
+parmTable = readtable("StaticVarTable.csv");
+
+%get variables that are non-zero
+pTable = parmTable(~isnan(parmTable.Value),:);
+
+if false
+    for j=1:size(KautzData,1)
+    
+        %substitue F_t1 and F_t2 to the f_x and f_y_respectively.  Substitute
+        %theta_h, theta_k,theta_a to be 
+        pTable(find(pTable.VarName=="F_t1"|pTable.VarName=="F_t2"|pTable.VarName=="theta_a"|pTable.VarName=="theta_h"|pTable.VarName=="theta_k"),'Value')={KautzData.f_x(j);KautzData.f_y(j);KautzData.theta_a(j);KautzData.theta_h(j);KautzData.theta_k(j)};
+    
+        newStaticEqns = simplify(subs(staticEqs,str2sym(pTable.VarName).',pTable.Value.'));
+        newStaticEqns = newStaticEqns(find(newStaticEqns~=symtrue)); %get rid of redundant equations
+        
+        %% solve static equations for reaction forces and torques, give force at the feet
+        nSE = newStaticEqns(find(newStaticEqns~=0));  %only get the non zero equations after simplification
+        returnSolution =(solve(nSE));
+    
+    
+    end
 end
 
 %% read table of parameters and solve equations using the simplified structure subEqs
 
-
-
-%convert matrix to table
 KautzDataStruct = load("output.mat");
 KautzData = KautzDataStruct.combined;
 KautzData(:,3) = -KautzData(:,1) -KautzData(:,2)+KautzData(:,3);  %convert the ankle angles in the convention defined above

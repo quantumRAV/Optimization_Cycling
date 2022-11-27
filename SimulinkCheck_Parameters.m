@@ -1,0 +1,14 @@
+m_h_k = 7.5; %kg
+m_k_a = 3.49; %kg
+m_a_t = 1.09; %kg
+l_h_k = 460; %mm
+l_k_a = 440; %mm
+l_a_t = 70; %mm
+r_h_k = 20;
+r_k_a = 20;
+r_a_t = 20;
+theta_h = -49.1884; %deg
+theta_k = -106.4012; %deg
+theta_a = 135.9370; %deg
+f_x = -49.1183;
+f_y = -43.7082;

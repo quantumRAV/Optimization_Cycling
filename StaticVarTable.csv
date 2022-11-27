@@ -1,50 +1,50 @@
-Var,VarName,definition,Value
-,F_a1,Force:ankle_x axis,NaN
-,F_a2,Force:ankle_y axis,NaN
-,F_c1,Force:crank center_x axis,0
-,F_c2,Force:crank center_y axis,0
-,F_ext_a1,Force:external_ankle_x axis,0
-,F_ext_a2,Force:external_ankle_y axis,0
-,F_ext_h1,Force:external_hip_x axis,0
-,F_ext_h2,Force:external_hip_y axis,0
-,F_ext_k1,Force:external_knee_x axis,0
-,F_ext_k2,Force:external_knee_y axis,0
-,F_ext_p1,Force:external_pedal center_x axis,0
-,F_ext_p2,Force:external_pedal center_y axis,0
-,F_ext_t1,Force:external_toe_x axis,0
-,F_ext_t2,Force:external_toe_y axis,0
-,F_h1,Force:hip_x axis,NaN
-,F_h2,Force:hip_y axis,NaN
-,F_k1,Force:knee_x axis,NaN
-,F_k2,Force:knee_y axis,NaN
-,F_p1,Force:pedal center_x axis,0
-,F_p2,Force:pedal center_y axis,0
-,F_t1,Force:toe_x axis,15.3
-,F_t2,Force:toe_y axis,13.3
-,L_a_t,Length:ankle_toe_,0.07
-,L_h_k,Length:hip_knee_,0.46
-,L_k_a,Length:knee_ankle_,0.44
-,L_p_c,Length:pedal center_crank center_,0
-,L_t_p,Length:toe_pedal center_,0
-,M_a3,Moment:ankle_z axis,NaN
-,M_c3,Moment:crank center_z axis,0
-,M_ext_a3,Moment:external_ankle_z axis,0
-,M_ext_h3,Moment:external_hip_z axis,0
-,M_ext_k3,Moment:external_knee_z axis,0
-,M_ext_p3,Moment:external_pedal center_z axis,0
-,M_ext_t3,Moment:external_toe_z axis,0
-,M_h3,Moment:hip_z axis,NaN
-,M_k3,Moment:knee_z axis,NaN
-,M_p3,Moment:pedal center_z axis,0
-,M_t3,Moment:toe_z axis,NaN
-,g,gravity:,9.81
-,m_a_t,mass:ankle_toe_,1.09
-,m_h_k,mass:hip_knee_,7.5
-,m_k_a,mass:knee_ankle_,3.49
-,m_p_c,mass:pedal center_crank center_,0
-,m_t_p,mass:toe_pedal center_,0
-,theta_a,angle:ankle_,1.570796327
-,theta_h,angle:hip_,4.71238898
-,theta_k,angle:knee_,0
-,theta_p,angle:pedal center_,NaN
-,theta_t,angle:toe_,NaN
+Var,VarName,definition,Value,SolveSymbolically,Comment
+,F_a1,Force:ankle_x axis,NaN,Y,
+,F_a2,Force:ankle_y axis,NaN,Y,
+,F_c1,Force:crank center_x axis,0,Y,
+,F_c2,Force:crank center_y axis,0,Y,
+,F_ext_a1,Force:external_ankle_x axis,0,N,
+,F_ext_a2,Force:external_ankle_y axis,0,N,
+,F_ext_h1,Force:external_hip_x axis,0,N,
+,F_ext_h2,Force:external_hip_y axis,0,N,
+,F_ext_k1,Force:external_knee_x axis,0,N,
+,F_ext_k2,Force:external_knee_y axis,0,N,
+,F_ext_p1,Force:external_pedal center_x axis,0,N,
+,F_ext_p2,Force:external_pedal center_y axis,0,N,
+,F_ext_t1,Force:external_toe_x axis,0,N,
+,F_ext_t2,Force:external_toe_y axis,0,N,
+,F_h1,Force:hip_x axis,NaN,Y,
+,F_h2,Force:hip_y axis,NaN,Y,
+,F_k1,Force:knee_x axis,NaN,Y,
+,F_k2,Force:knee_y axis,NaN,Y,
+,F_p1,Force:pedal center_x axis,0,Y,
+,F_p2,Force:pedal center_y axis,0,Y,
+,F_t1,Force:toe_x axis,0,P,This is f_x from the data
+,F_t2,Force:toe_y axis,0,P,This is f_y from the data
+,L_a_t,Length:ankle_toe_,0.07,N,
+,L_h_k,Length:hip_knee_,0.46,N,
+,L_k_a,Length:knee_ankle_,0.44,N,
+,L_p_c,Length:pedal center_crank center_,0,N,
+,L_t_p,Length:toe_pedal center_,0,N,
+,M_a3,Moment:ankle_z axis,NaN,Y,
+,M_c3,Moment:crank center_z axis,0,N,
+,M_ext_a3,Moment:external_ankle_z axis,0,N,
+,M_ext_h3,Moment:external_hip_z axis,0,N,
+,M_ext_k3,Moment:external_knee_z axis,0,N,
+,M_ext_p3,Moment:external_pedal center_z axis,0,N,
+,M_ext_t3,Moment:external_toe_z axis,0,N,
+,M_h3,Moment:hip_z axis,NaN,Y,
+,M_k3,Moment:knee_z axis,NaN,Y,
+,M_p3,Moment:pedal center_z axis,0,Y,
+,M_t3,Moment:toe_z axis,NaN,Y,
+,g,gravity:,9.81,N,
+,m_a_t,mass:ankle_toe_,1.09,N,
+,m_h_k,mass:hip_knee_,7.5,N,
+,m_k_a,mass:knee_ankle_,3.49,N,
+,m_p_c,mass:pedal center_crank center_,0,N,
+,m_t_p,mass:toe_pedal center_,0,N,
+,theta_a,angle:ankle_,0,P,this is the angle of the ankle
+,theta_h,angle:hip_,0,P,this is the angle of the hip
+,theta_k,angle:knee_,0,P,this is the angle of the knee
+,theta_p,angle:pedal center_,NaN,N,
+,theta_t,angle:toe_,NaN,N,
