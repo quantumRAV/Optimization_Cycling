@@ -229,7 +229,7 @@ disp("Finished")
 resultTable = struct2table(resultStruct);
 
 totalTable = [KautzData,resultTable];
-
+writetable(totalTable,"results_w_Activation.xlsx")
 
 
 
