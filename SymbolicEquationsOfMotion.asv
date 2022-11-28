@@ -109,6 +109,25 @@ writelines(textStr,"StaticEqEquations.txt")
 %%print
 %latex(simplify(staticEqs(30,1)))
 
+%% equations for muscle forces and torques
+createVarNameFcn = @(prefix,suffix) sprintf('%s_%s',prefix,suffix);
+
+muscleSuffix ={'RF' 'IP' 'G' 'H' 'TA' 'GA'};
+%muscleRadii = str2sym(cellfun(@(r)sym(createVarNameFcn('r',r),[6,1]),muscleSuffix,'UniformOutput',false));
+muscleRadii = sym("r_",[3,6]);
+muscleForce =  str2sym(cellfun(@(r)createVarNameFcn('F',r),muscleSuffix,'UniformOutput',false));
+muscleActivation = str2sym(cellfun(@(r)createVarNameFcn('a',r),muscleSuffix,'UniformOutput',false));
+MuscleTorques = sym({'M_h','M_k','M_t'});
+
+MuscleTorqueEquations = MuscleTorques.'-[muscleRadii(1,1) muscleRadii(1,2) -muscleRadii(1,3) -muscleRadii(1,4) 0 0;muscleRadii(2,1) 0 -muscleRadii(2,3) 0 0 0;0 0 0 0 muscleRadii(3,5) -muscleRadii(3,6) ]*(muscleActivation.*muscleForce).';
+MuscleTorqueEquations_P = subs(MuscleTorqueEquations,muscleRadii,repmat([0.081; 0.035;0.052],[1,6]));  %use same radii for now
+MuscleTorqueEquations_P = subs(MuscleTorqueEquations_P,muscleForce, [1200, 1500, 3000, 3000, 2500, 3000]);
+
+if false  %set to true if you want to regenerate the constraint functions for muscle optimization
+    currdir = [pwd filesep]; % You might need to use currdir = pwd
+    filename_cons = [currdir,'constraint_MuscleOptimization.m'];
+    matlabFunction([],MuscleTorqueEquations_P,'file',filename_cons,'vars',{[MuscleTorques,muscleActivation]},'outputs',{'c','ceq'});
+end
 
 %% create table to input parameters
 letterDictStruct.FirstLetter=containers.Map(["F","L","M","g","m","theta"],["Force","Length","Moment","gravity","mass","angle"]);
@@ -155,38 +174,50 @@ KautzDataStruct = load("output.mat");
 KautzData = KautzDataStruct.combined;
 KautzData(:,3) = -KautzData(:,1) -KautzData(:,2)+KautzData(:,3);  %convert the ankle angles in the convention defined above
 KautzData = array2table(KautzData,'VariableNames',{'theta_h','theta_k','theta_a','f_x','f_y','x','y'});
-KautzData.f_x=-KautzData.f_x; %need to negate because the negative sign is assumed in the EOMs.  Recall that these forces that are read in were converted to be in the global x and y frames
-KautzData.f_y=-KautzData.f_y; %need to negate because the negative sign is assumed in the EOMs.
+KautzData.f_x_negated=-KautzData.f_x; %need to negate because the negative sign is assumed in the EOMs.  Recall that these forces that are read in were converted to be in the global x and y frames
+KautzData.f_y_negated=-KautzData.f_y; %need to negate because the negative sign is assumed in the EOMs.
 parmTable = readtable("StaticVarTable.csv");
 
 %get variables that are non-zero
 pTable = parmTable((parmTable.SolveSymbolically=="P"),:); %for parameters
 
 resultStruct=struct();
-fstructn = fieldnames(subEqs);
-for vv=1:length(fstructn)
+for vv=1:length(paramOutputs)
 
-    resultStruct.(fstructn{vv}) = zeros(size(KautzData,1),1);
+    resultStruct.(paramOutputs{vv}) = zeros(size(KautzData,1),1);
+
+end
+
+for vv=1:length(paramOutputs)
+
+    resultStruct.("Activation_"+paramOutputs{vv}) = zeros(size(KautzData,1),1);
 
 end
 
 
 for j=1:size(KautzData,1)
-
-    %substitue F_t1 and F_t2 to the f_x and f_y_respectively.  Substitute
-    %theta_h, theta_k,theta_a to be 
-    pTable(find(pTable.VarName=="F_t1"|pTable.VarName=="F_t2"|pTable.VarName=="theta_a"|pTable.VarName=="theta_h"|pTable.VarName=="theta_k"),'Value')={KautzData.f_x(j);KautzData.f_y(j);KautzData.theta_a(j);KautzData.theta_h(j);KautzData.theta_k(j)};
-
-    newStaticEqns = subs(subEqs,str2sym(pTable.VarName).',pTable.Value.');
-    %newStaticEqns = newStaticEqns(find(newStaticEqns~=symtrue)); %get rid of redundant equations
     
-    %% solve static equations for reaction forces and torques, give force at the feet
-    %nSE = newStaticEqns(find(newStaticEqns~=0));  %only get the non zero equations after simplification
-    returnSolution =newStaticEqns;
+    %substitue F_t1 and F_t2 to the f_x and f_y_respectively.  Substitute
+    %theta_h, theta_k,theta_a 
+    resSolution = JointForceTorque_Fcn(KautzData.f_x_negated(j),KautzData.f_y_negated(j),KautzData.theta_h(j),KautzData.theta_k(j),KautzData.theta_a(j));
 
-    for vv=1:length(fstructn)
+    for vv=1:length(paramOutputs)
 
-        resultStruct.(fstructn{vv})(j) = returnSolution.(fstructn{vv});
+        resultStruct.(paramOutputs{vv})(j) = resSolution(vv);
+
+    end
+
+    %%perform optimization to get the activations
+    MuscleTorques = [resSolution(paramOutputs=="M_h3"),resSolution(paramOutputs=="M_k3"), resSolution(paramOutputs=="M_a3")] ;
+    objFunc = @(x) sum(x.^2);
+    x0=zeros(1,6);
+    options = optimoptions('fmincon','Display','iter','Algorithm','sqp');
+    lb=zeros(1,6);
+    ub=ones(1,6);
+    xval_NN=fmincon(objFunc,x0,[],[],[],[],lb,ub,@(x)constraint_MuscleOptimization([MuscleTorques,x]),options);
+    for vv=1:length(muscleSuffix)
+
+
 
     end
 
@@ -198,6 +229,10 @@ disp("Finished")
 resultTable = struct2table(resultStruct);
 
 totalTable = [KautzData,resultTable];
+
+
+
+
 
 function[outTable] = createVariableTable(fnamestr,sym_vars, letterDictStruct)
 
