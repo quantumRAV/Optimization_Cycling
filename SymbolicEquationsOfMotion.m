@@ -121,9 +121,9 @@ MuscleTorques = sym({'M_h','M_k','M_t'});
 
 MuscleTorqueEquations = MuscleTorques.'-[muscleRadii(1,1) muscleRadii(1,2) -muscleRadii(1,3) -muscleRadii(1,4) 0 0;muscleRadii(2,1) 0 -muscleRadii(2,3) 0 0 0;0 0 0 0 muscleRadii(3,5) -muscleRadii(3,6) ]*(muscleActivation.*muscleForce).';
 MuscleTorqueEquations_P = subs(MuscleTorqueEquations,muscleRadii,repmat([0.081; 0.035;0.052],[1,6]));  %use same radii for now
-MuscleTorqueEquations_P = subs(MuscleTorqueEquations_P,muscleForce, [1200, 1500, 3000, 3000, 2500, 3000]);
+MuscleTorqueEquations_P = subs(MuscleTorqueEquations_P,muscleForce, [1200, 1500*4, 3000, 3000, 2500, 3000]);
 
-if false  %set to true if you want to regenerate the constraint functions for muscle optimization
+if true  %set to true if you want to regenerate the constraint functions for muscle optimization
     currdir = [pwd filesep]; % You might need to use currdir = pwd
     filename_cons = [currdir,'constraint_MuscleOptimization.m'];
     matlabFunction([],MuscleTorqueEquations_P,'file',filename_cons,'vars',{[MuscleTorques,muscleActivation]},'outputs',{'c','ceq'});
@@ -195,6 +195,9 @@ for vv=1:length(muscleSuffix)
 end
 
 
+exitflags = zeros(size(KautzData,1),1)
+
+
 for j=1:size(KautzData,1)
     
     %substitue F_t1 and F_t2 to the f_x and f_y_respectively.  Substitute
@@ -209,18 +212,19 @@ for j=1:size(KautzData,1)
 
     %%perform optimization to get the activations
     MuscleTorques = [resSolution(paramOutputs=="M_h3"),resSolution(paramOutputs=="M_k3"), resSolution(paramOutputs=="M_a3")] ;
-    objFunc = @(x) sum(x.^2);
+    objFunc = @(x) sum(x.^2) + sum(x);
     x0=zeros(1,6);
     options = optimoptions('fmincon','Algorithm','sqp');
     lb=zeros(1,6);
     ub=ones(1,6);
-    xval_activation=fmincon(objFunc,x0,[],[],[],[],lb,ub,@(x)constraint_MuscleOptimization([MuscleTorques,x]),options);
+    [xval_activation,fval,exitflags(j),output,lambda,grad]=fmincon(objFunc,x0,[],[],[],[],lb,ub,@(x)constraint_MuscleOptimization([MuscleTorques,x]),options);
     for vv=1:length(muscleSuffix)
 
         resultStruct.("Activation_"+muscleSuffix{vv})(j) = xval_activation(vv);
 
     end
 
+    %check exit flag
 
 
 end
@@ -231,6 +235,22 @@ resultTable = struct2table(resultStruct);
 totalTable = [KautzData,resultTable];
 writetable(totalTable,"results_w_Activation.xlsx")
 
+
+%%
+figure()
+tiledlayout(6,1)
+ax=nexttile;
+plot(ax,0:360,totalTable.Activation_RF)
+ax=nexttile;
+plot(ax,0:360,totalTable.Activation_IP)
+ax=nexttile;
+plot(ax,0:360,totalTable.Activation_G)
+ax=nexttile;
+plot(ax,0:360,totalTable.Activation_H)
+ax=nexttile;
+plot(ax,0:360,totalTable.Activation_TA)
+ax=nexttile;
+plot(ax,0:360,totalTable.Activation_GA)
 
 
 

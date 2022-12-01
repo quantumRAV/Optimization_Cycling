@@ -1,0 +1,146 @@
+%% Setting up the problem
+
+% x1 = activation Rectus femoris
+% x2 = activation Iliopsoas
+% x3 = activation gluteals
+% x4 = activation hamstring
+% x5 = activation Tibialis Anterior
+% x6 = activation gastrocneius
+
+objective = @(x) x(1)^2 + x(2)^2 + x(3)^2 + x(4)^2 + x(5)^2 + x(6)^2;
+
+% initial guess
+x0 = ones(1,6);%[0.2 0.2 0.2 0.2 0.2 0.2];
+
+% variable bounds
+lb = [0 0 0 0 0 0];
+ub = [1 1 1 1 1 1];
+
+% show initial objective
+disp(['Initial Objective: ' num2str(objective(x0))])
+
+% linear constraints
+% Mh3 = - Fh*rh - Fg*rh + Fi*rh + Fr*rh
+% Mh3 = -243*x4 - 243*x3 + 121.5*x2 + 97.2*x1
+% Mk3 = -Fh*rk + Fr*rk
+% Mk3 = -105*x4 + 42*x1
+% Ma3 = -Fga*ra + Ft*ra
+% Ma3 = -156*x6 + 130*x5
+A = [];
+b = [];
+Aeq = [97.2 121.5*3 -243 -243 0 0; 42 0 0 -105 0 0; 0 0 0 0 130 -156];
+
+% nonlinear constraints
+nonlincon = @nlcon;
+
+%options
+options = optimoptions(@fmincon,'Algorithm','sqp');
+
+%% Managing the output table
+outputTable = totalTable;
+mh3 = totalTable.("M_h3");
+mk3 = totalTable.("M_k3");
+ma3 = totalTable.("M_a3");
+
+x1 = [];
+x2 = [];
+x3 = [];
+x4 = [];
+x5 = [];
+x6 = [];
+
+totalActivation = [];
+eflag = [];
+
+%% Running the optimizer
+
+for i = 1:1:361
+    beq = [mh3(i); mk3(i); ma3(i)];
+
+    % optimize with fmincon
+    %[X,FVAL,EXITFLAG,OUTPUT,LAMBDA,GRAD,HESSIAN]
+    % = fmincon(FUN,X0,A,B,Aeq,Beq,LB,UB,NONLCON,OPTIONS)
+    [X, FVAL, EXITFLAG, OUTPUT, LAMBDA] = fmincon(objective,x0,A,b,Aeq,beq,lb,ub,nonlincon, options);
+    x1(end+1) = X(1);
+    x2(end+1) = X(2);
+    x3(end+1) = X(3);
+    x4(end+1) = X(4);
+    x5(end+1) = X(5);
+    x6(end+1) = X(6);
+    totalActivation(end+1) = FVAL;
+    eflag(end+1) = EXITFLAG;
+end
+
+
+
+%% Displaying the results
+
+% show final objective
+disp(['Final Objective: ' num2str(objective(X))])
+
+X = [x1; x2; x3; x4; x5; x6];
+
+%% 
+figure();
+set(gcf, 'Units', 'inches');
+set(gcf, 'Position', [ 2 2 6.4*2.5 4.7*2.5]);
+set(gcf,'color','w');
+set(0, 'DefaultAxesFontName', 'Arial')
+tiledlayout(6,1)
+titles={'RF','IP','Glu.','Ham.','Tib. Ant.','Gastroc.'};
+
+for k = 1:6
+    ax=nexttile;
+    plot(ax,0:360,X(k,:))
+    title(ax,titles{k})
+    xlabel('angle of crank (degrees)')
+    ylabel(sprintf('Activation (%s)',titles{k}));
+
+end
+
+figure();
+figure();
+set(gcf, 'Units', 'inches');
+set(gcf, 'Position', [ 2 2 6.4*2.5 4.7*2.5]);
+set(gcf,'color','w');
+set(0, 'DefaultAxesFontName', 'Arial')
+tiledlayout(3,1)
+
+ax=nexttile
+plot(ax,0:360,totalTable.M_h3)
+title(ax,'Moment of Hip (Nm)')
+xlabel(ax,'angle of crank (degrees)')
+ylabel(ax,'Moment of Hip (Nm)');
+
+ax=nexttile
+plot(ax,0:360,totalTable.M_k3)
+title(ax,'Moment of Knee (Nm)')
+xlabel(ax,'angle of crank (degrees)')
+ylabel(ax,'Moment of Knee (Nm)');
+
+ax=nexttile
+plot(ax,0:360,totalTable.M_a3)
+title(ax,'Moment of Ankle (Nm)')
+xlabel(ax,'angle of crank (degrees)')
+ylabel(ax,'Moment of Ankle (Nm)');
+
+
+figure();
+tiledlayout(2,1)
+set(gcf, 'Units', 'inches');
+set(gcf, 'Position', [ 2 2 6.4*2.5 4.7*2.5]);
+set(gcf,'color','w');
+set(0, 'DefaultAxesFontName', 'Arial')
+tiledlayout(3,1)
+
+ax=nexttile
+plot(ax,0:360,totalTable.f_x)
+title(ax,'Total force x-direction (N)')
+xlabel(ax,'angle of crank (degrees)')
+ylabel(ax,'Force from foot on Pedal x direction (N)');
+
+ax=nexttile
+plot(ax,0:360,totalTable.f_y)
+title(ax,'Total force y-direction (N)')
+xlabel(ax,'angle of crank (degrees)')
+ylabel(ax,'Force from foot on Pedal y direction (N)');
