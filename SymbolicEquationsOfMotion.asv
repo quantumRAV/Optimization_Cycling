@@ -104,7 +104,7 @@ for jj=1:length(staticEqs)
 end
 
 
-writelines(textStr,"StaticEqEquations.txt")
+%writelines(textStr,"StaticEqEquations.txt")
 
 %%print
 %latex(simplify(staticEqs(30,1)))
@@ -121,9 +121,9 @@ MuscleTorques = sym({'M_h','M_k','M_t'});
 
 MuscleTorqueEquations = MuscleTorques.'-[muscleRadii(1,1) muscleRadii(1,2) -muscleRadii(1,3) -muscleRadii(1,4) 0 0;muscleRadii(2,1) 0 -muscleRadii(2,3) 0 0 0;0 0 0 0 muscleRadii(3,5) -muscleRadii(3,6) ]*(muscleActivation.*muscleForce).';
 MuscleTorqueEquations_P = subs(MuscleTorqueEquations,muscleRadii,repmat([0.081; 0.035;0.052],[1,6]));  %use same radii for now
-MuscleTorqueEquations_P = subs(MuscleTorqueEquations_P,muscleForce, [1200, 1500, 3000, 3000, 2500, 3000]);
+MuscleTorqueEquations_P = subs(MuscleTorqueEquations_P,muscleForce, [1200, 1500*4, 3000, 3000, 2500, 3000]);
 
-if false  %set to true if you want to regenerate the constraint functions for muscle optimization
+if true  %set to true if you want to regenerate the constraint functions for muscle optimization
     currdir = [pwd filesep]; % You might need to use currdir = pwd
     filename_cons = [currdir,'constraint_MuscleOptimization.m'];
     matlabFunction([],MuscleTorqueEquations_P,'file',filename_cons,'vars',{[MuscleTorques,muscleActivation]},'outputs',{'c','ceq'});
@@ -168,7 +168,6 @@ end
 %% read table of parameters and solve equations using the simplified structure subEqs
 
 
-
 %convert matrix to table
 KautzDataStruct = load("output.mat");
 KautzData = KautzDataStruct.combined;
@@ -195,6 +194,9 @@ for vv=1:length(muscleSuffix)
 end
 
 
+exitflags = zeros(size(KautzData,1),1)
+
+
 for j=1:size(KautzData,1)
     
     %substitue F_t1 and F_t2 to the f_x and f_y_respectively.  Substitute
@@ -209,12 +211,12 @@ for j=1:size(KautzData,1)
 
     %%perform optimization to get the activations
     MuscleTorques = [resSolution(paramOutputs=="M_h3"),resSolution(paramOutputs=="M_k3"), resSolution(paramOutputs=="M_a3")] ;
-    objFunc = @(x) sum(x.^2);
+    objFunc = @(x) sum(x.^2) + sum(x);
     x0=zeros(1,6);
     options = optimoptions('fmincon','Algorithm','sqp');
     lb=zeros(1,6);
     ub=ones(1,6);
-    [xval_activation,exitflag,output,lambda,grad]=fmincon(objFunc,x0,[],[],[],[],lb,ub,@(x)constraint_MuscleOptimization([MuscleTorques,x]),options);
+    [xval_activation,fval,exitflags(j),output,lambda,grad]=fmincon(objFunc,x0,[],[],[],[],lb,ub,@(x)constraint_MuscleOptimization([MuscleTorques,x]),options);
     for vv=1:length(muscleSuffix)
 
         resultStruct.("Activation_"+muscleSuffix{vv})(j) = xval_activation(vv);
@@ -231,6 +233,96 @@ resultTable = struct2table(resultStruct);
 
 totalTable = [KautzData,resultTable];
 writetable(totalTable,"results_w_Activation.xlsx")
+
+
+
+%% plots
+
+thighL = parmTable.Value(parmTable.VarName=="L_h_k");
+shankL = parmTable.Value(parmTable.VarName=="L_k_a");
+footL =parmTable.Value(parmTable.VarName=="L_a_t");
+
+Ho_func = matlabFunction(HomogenousTrans,'vars',[thetaT,l_OP]);
+
+
+
+close all
+numMuscles = 6;
+fig=figure();
+set(gcf, 'Units', 'normalized');
+set(gcf, 'Position', [0 0 1 1]);
+set(gcf,'color','w');
+set(0, 'DefaultAxesFontName', 'Arial')
+tiledlayout(numMuscles,2);
+
+leg_ax = nexttile([numMuscles,1]);
+axColl = {};
+animatedLineCol = {}
+
+MuscleAVid = VideoWriter('MuscleActivation'); %open video file
+MuscleAVid.FrameRate = 30;  
+open(MuscleAVid)
+
+for vv = 1:numMuscles
+    axCol1{vv} = nexttile;
+    set(axCol1{vv},'FontSize',12)
+    animatedLineCol{vv} = animatedline(axCol1{vv});
+    xlim(axCol1{vv},[0,360]);
+    ylim(axCol1{vv},[0,1]);
+    title(muscleSuffix{vv});
+    ylabel('Activation','FontSize',14,'FontWeight','bold');
+
+
+end
+
+
+aLine_thigh = animatedline(leg_ax);
+aLine_shank = animatedline(leg_ax);
+aLine_foot = animatedline(leg_ax);
+xlim(leg_ax,[-.6,.6]);
+ylim(leg_ax,[-1,.2]);
+
+xlabel(axCol1{6},'Crank Angle of Bicycle (deg)', 'FontSize',14,'FontWeight','bold');
+
+
+angles=[0:360];
+muscleNames = {'Rectus Femoris (RF)' 'Iliopsoas (IP)' 'Gluteals (G)' 'Hamstrings (H)' 'Tibialis Anterior (TA)' 'Gastrocnemius (GA)'};
+
+for j=1:length(angles)
+    for v=1:length(muscleSuffix)
+        
+        activationV = totalTable.(sprintf("Activation_%s",muscleSuffix{v}));
+        %plot(axCol1{v},angles(1:j),activationV(1:j));
+        addpoints(animatedLineCol{v},angles(j),activationV(j));
+    end
+
+
+    %plot cyclist
+    posH    = [0;0];
+    posK = Ho_func(totalTable.theta_h(j),0)*Ho_func(totalTable.theta_k(j),thighL)*[0;0;0;1];
+    posA = Ho_func(totalTable.theta_h(j),0)*Ho_func(totalTable.theta_k(j),thighL)*Ho_func(totalTable.theta_a(j),shankL)*[0;0;0;1];
+    posT = Ho_func(totalTable.theta_h(j),0)*Ho_func(totalTable.theta_k(j),thighL)*Ho_func(totalTable.theta_a(j),shankL)*Ho_func(0,footL)*[0;0;0;1];
+
+    clearpoints(aLine_thigh);
+    clearpoints(aLine_shank);
+    clearpoints(aLine_foot);
+
+    addpoints(aLine_thigh,[posH(1);posK(1)],[posH(2);posK(2)]);
+    addpoints(aLine_shank,[posK(1);posA(1)],[posK(2);posA(2)]);
+    addpoints(aLine_foot,[posA(1);posT(1)],[posA(2);posT(2)]);
+
+    drawnow limitrate;
+    pause(0.027);
+    frame = getframe(gcf); %get frame
+    writeVideo(MuscleAVid, frame);
+
+    %clf(fig);
+
+end
+
+close(MuscleAVid);
+
+
 
 
 %%

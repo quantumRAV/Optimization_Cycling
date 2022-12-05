@@ -104,7 +104,7 @@ for jj=1:length(staticEqs)
 end
 
 
-writelines(textStr,"StaticEqEquations.txt")
+%writelines(textStr,"StaticEqEquations.txt")
 
 %%print
 %latex(simplify(staticEqs(30,1)))
@@ -166,7 +166,6 @@ if false %set to true if you want to regenerate a separate file for calculating 
 end
 
 %% read table of parameters and solve equations using the simplified structure subEqs
-
 
 
 %convert matrix to table
@@ -234,6 +233,101 @@ resultTable = struct2table(resultStruct);
 
 totalTable = [KautzData,resultTable];
 writetable(totalTable,"results_w_Activation.xlsx")
+
+
+
+%% plots
+
+thighL = parmTable.Value(parmTable.VarName=="L_h_k");
+shankL = parmTable.Value(parmTable.VarName=="L_k_a");
+footL =parmTable.Value(parmTable.VarName=="L_a_t");
+
+Ho_func = matlabFunction(HomogenousTrans,'vars',[thetaT,l_OP]);
+
+
+
+close all
+numMuscles = 6;
+fig=figure();
+set(gcf, 'Units', 'normalized');
+set(gcf, 'Position', [0 0.1 0.8 0.8]);
+set(gcf,'color','w');
+set(0, 'DefaultAxesFontName', 'Arial')
+tiledlayout(numMuscles,2);
+
+leg_ax = nexttile([numMuscles,1]);
+set(leg_ax,'XColor', 'none','YColor','none');
+
+axColl = {};
+animatedLineCol = {}
+
+MuscleAVid = VideoWriter('MuscleActivation'); %open video file
+MuscleAVid.FrameRate = 30;  
+open(MuscleAVid)
+
+
+muscleNames = {'Rectus Femoris (RF)' 'Iliopsoas (IP)' 'Gluteals (G)' 'Hamstrings (H)' 'Tibialis Anterior (TA)' 'Gastrocnemius (GA)'};
+
+for vv = 1:numMuscles
+    axCol1{vv} = nexttile;
+    set(axCol1{vv},'FontSize',12)
+    animatedLineCol{vv} = animatedline(axCol1{vv});
+    xlim(axCol1{vv},[0,360]);
+    ylim(axCol1{vv},[0,1]);
+    title(muscleNames{vv});
+    ylabel('Activation','FontSize',14,'FontWeight','bold');
+
+
+end
+
+
+aLine_thigh = animatedline(leg_ax,'LineWidth',3,'Marker','o','MarkerFaceColor','r','MarkerSize',9);
+aLine_shank = animatedline(leg_ax,'LineWidth',3,'Marker','o','MarkerFaceColor','b','MarkerSize',9);
+aLine_foot = animatedline(leg_ax,'LineWidth',3,'Marker','o','MarkerFaceColor','g','MarkerSize',9);
+xlim(leg_ax,[-.6,.6]);
+ylim(leg_ax,[-1,.2]);
+
+xlabel(axCol1{6},'Crank Angle of Bicycle (deg)', 'FontSize',14,'FontWeight','bold');
+
+
+angles=[0:360];
+
+
+for j=1:length(angles)
+    for v=1:length(muscleSuffix)
+        
+        activationV = totalTable.(sprintf("Activation_%s",muscleSuffix{v}));
+        %plot(axCol1{v},angles(1:j),activationV(1:j));
+        addpoints(animatedLineCol{v},angles(j),activationV(j));
+    end
+
+
+    %plot cyclist
+    posH    = [0;0];
+    posK = Ho_func(totalTable.theta_h(j),0)*Ho_func(totalTable.theta_k(j),thighL)*[0;0;0;1];
+    posA = Ho_func(totalTable.theta_h(j),0)*Ho_func(totalTable.theta_k(j),thighL)*Ho_func(totalTable.theta_a(j),shankL)*[0;0;0;1];
+    posT = Ho_func(totalTable.theta_h(j),0)*Ho_func(totalTable.theta_k(j),thighL)*Ho_func(totalTable.theta_a(j),shankL)*Ho_func(0,footL)*[0;0;0;1];
+
+    clearpoints(aLine_thigh);
+    clearpoints(aLine_shank);
+    clearpoints(aLine_foot);
+
+    addpoints(aLine_thigh,[posH(1);posK(1)],[posH(2);posK(2)]);
+    addpoints(aLine_shank,[posK(1);posA(1)],[posK(2);posA(2)]);
+    addpoints(aLine_foot,[posA(1);posT(1)],[posA(2);posT(2)]);
+
+    drawnow limitrate;
+    pause(0.027);
+    frame = getframe(gcf); %get frame
+    writeVideo(MuscleAVid, frame);
+
+    %clf(fig);
+
+end
+
+close(MuscleAVid);
+
+
 
 
 %%

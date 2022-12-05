@@ -7,7 +7,7 @@
 % x5 = activation Tibialis Anterior
 % x6 = activation gastrocneius
 
-objective = @(x) x(1)^2 + x(2)^2 + x(3)^2 + x(4)^2 + x(5)^2 + x(6)^2;
+objective = @(x) x(1)^3 + x(2)^3 + x(3)^3 + x(4)^3 + x(5)^3 + x(6)^3;
 
 % initial guess
 x0 = ones(1,6);%[0.2 0.2 0.2 0.2 0.2 0.2];
