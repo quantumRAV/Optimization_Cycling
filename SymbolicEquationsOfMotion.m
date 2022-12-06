@@ -329,6 +329,68 @@ close(MuscleAVid);
 
 
 
+%% Plot torque
+
+numMuscles = 6;
+fig=figure();
+set(gcf, 'Units', 'normalized');
+set(gcf, 'Position', [0 0.1 0.8 0.8]);
+set(gcf,'color','w');
+set(0, 'DefaultAxesFontName', 'Arial')
+tiledlayout(numMuscles,2);
+
+ax=nexttile(1);
+plot(ax,angles,totalTable.M_h3);
+ylabel('(Nm)','FontSize',12,'FontWeight','bold');
+title('Hip Torque','FontSize',12,'FontWeight','bold');
+
+ax=nexttile(3);
+plot(ax,angles,totalTable.M_k3);
+ylabel('(Nm)','FontSize',12,'FontWeight','bold');
+title('Knee Torque','FontSize',12,'FontWeight','bold');
+
+ax=nexttile(5);
+plot(ax,angles,totalTable.M_a3);
+ylabel('(Nm)','FontSize',12,'FontWeight','bold');
+title('Ankle Torque','FontSize',12,'FontWeight','bold');
+
+ax=nexttile(7);
+plot(ax,angles,totalTable.f_x);
+ylabel('(N)','FontSize',12,'FontWeight','bold');
+title('Foot x-force','FontSize',12,'FontWeight','bold');
+
+ax=nexttile(9);
+plot(ax,angles,totalTable.f_y);
+ylabel('(N)','FontSize',12,'FontWeight','bold');
+title('Foot y-force (N)','FontSize',12,'FontWeight','bold');
+xlabel('Crank Angle of Bicycle (deg)', 'FontSize',12,'FontWeight','bold');
+
+
+axColl = {};
+
+
+
+
+muscleNames = {'Rectus Femoris (RF)' 'Iliopsoas (IP)' 'Gluteals (G)' 'Hamstrings (H)' 'Tibialis Anterior (TA)' 'Gastrocnemius (GA)'};
+
+for vv = 1:numMuscles
+    axCol1{vv} = nexttile((vv)*(2));
+    
+    
+    
+    activationV = totalTable.(sprintf("Activation_%s",muscleSuffix{vv}));
+        %plot(axCol1{v},angles(1:j),activationV(1:j));
+    plot(axCol1{vv},angles,activationV,'k-');
+    ylabel(axCol1{vv} ,'Activation','FontSize',14,'FontWeight','bold');
+    title(muscleNames{vv});
+
+    set(axCol1{vv},'FontSize',12)
+    xlim(axCol1{vv},[0,360]);
+    ylim(axCol1{vv},[0,1]);
+
+
+end
+xlabel(axCol1{6},'Crank Angle of Bicycle (deg)', 'FontSize',14,'FontWeight','bold');
 
 %%
 figure()

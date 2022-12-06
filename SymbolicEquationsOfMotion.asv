@@ -250,12 +250,14 @@ close all
 numMuscles = 6;
 fig=figure();
 set(gcf, 'Units', 'normalized');
-set(gcf, 'Position', [0 0 1 1]);
+set(gcf, 'Position', [0 0.1 0.8 0.8]);
 set(gcf,'color','w');
 set(0, 'DefaultAxesFontName', 'Arial')
 tiledlayout(numMuscles,2);
 
 leg_ax = nexttile([numMuscles,1]);
+set(leg_ax,'XColor', 'none','YColor','none');
+
 axColl = {};
 animatedLineCol = {}
 
@@ -263,22 +265,25 @@ MuscleAVid = VideoWriter('MuscleActivation'); %open video file
 MuscleAVid.FrameRate = 30;  
 open(MuscleAVid)
 
+
+muscleNames = {'Rectus Femoris (RF)' 'Iliopsoas (IP)' 'Gluteals (G)' 'Hamstrings (H)' 'Tibialis Anterior (TA)' 'Gastrocnemius (GA)'};
+
 for vv = 1:numMuscles
     axCol1{vv} = nexttile;
     set(axCol1{vv},'FontSize',12)
     animatedLineCol{vv} = animatedline(axCol1{vv});
     xlim(axCol1{vv},[0,360]);
     ylim(axCol1{vv},[0,1]);
-    title(muscleSuffix{vv});
+    title(muscleNames{vv});
     ylabel('Activation','FontSize',14,'FontWeight','bold');
 
 
 end
 
 
-aLine_thigh = animatedline(leg_ax);
-aLine_shank = animatedline(leg_ax);
-aLine_foot = animatedline(leg_ax);
+aLine_thigh = animatedline(leg_ax,'LineWidth',3,'Marker','o','MarkerFaceColor','r','MarkerSize',9);
+aLine_shank = animatedline(leg_ax,'LineWidth',3,'Marker','o','MarkerFaceColor','b','MarkerSize',9);
+aLine_foot = animatedline(leg_ax,'LineWidth',3,'Marker','o','MarkerFaceColor','g','MarkerSize',9);
 xlim(leg_ax,[-.6,.6]);
 ylim(leg_ax,[-1,.2]);
 
@@ -286,7 +291,7 @@ xlabel(axCol1{6},'Crank Angle of Bicycle (deg)', 'FontSize',14,'FontWeight','bol
 
 
 angles=[0:360];
-muscleNames = {'Rectus Femoris (RF)' 'Iliopsoas (IP)' 'Gluteals (G)' 'Hamstrings (H)' 'Tibialis Anterior (TA)' 'Gastrocnemius (GA)'};
+
 
 for j=1:length(angles)
     for v=1:length(muscleSuffix)
@@ -324,6 +329,59 @@ close(MuscleAVid);
 
 
 
+%% Plot torque
+
+numMuscles = 6;
+fig=figure();
+set(gcf, 'Units', 'normalized');
+set(gcf, 'Position', [0 0.1 0.8 0.8]);
+set(gcf,'color','w');
+set(0, 'DefaultAxesFontName', 'Arial')
+tiledlayout(numMuscles,2);
+
+ax=nexttile(1);
+plot(ax,angles,totalTable.M_h3);
+ylabel('Hip Torque (Nm)');
+
+ax=nexttile(3);
+plot(ax,angles,totalTable.M_k3);
+ylabel('Knee Torque (Nm)');
+
+ax=nexttile(5);
+plot(ax,angles,totalTable.M_a3);
+ylabel('Angkle Torque (Nm)');
+
+ax=nexttile(7);
+plot(ax,angles,totalTable.f_x);
+ylabel('Foot x-force (N)');
+
+ax=nexttile(9);
+plot(ax,angles,totalTable.f_y);
+ylabel('Foot y-force (N)');
+xlabel('Angle')
+
+
+axColl = {};
+
+
+
+
+muscleNames = {'Rectus Femoris (RF)' 'Iliopsoas (IP)' 'Gluteals (G)' 'Hamstrings (H)' 'Tibialis Anterior (TA)' 'Gastrocnemius (GA)'};
+
+for vv = 1:numMuscles
+    axCol1{vv} = nexttile;
+    set(axCol1{vv},'FontSize',12)
+    xlim(axCol1{vv},[0,360]);
+    ylim(axCol1{vv},[0,1]);
+    title(muscleNames{vv});
+    ylabel(axCol1{vv} ,'Activation','FontSize',14,'FontWeight','bold');
+    activationV = totalTable.(sprintf("Activation_%s",muscleSuffix{vv}));
+        %plot(axCol1{v},angles(1:j),activationV(1:j));
+    plot(axCol1{vv},angles,activationV,'k-');
+
+
+end
+xlabel(axCol1{6},'Crank Angle of Bicycle (deg)', 'FontSize',14,'FontWeight','bold');
 
 %%
 figure()
