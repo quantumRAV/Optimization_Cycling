@@ -119,9 +119,10 @@ muscleForce =  str2sym(cellfun(@(r)createVarNameFcn('F',r),muscleSuffix,'Uniform
 muscleActivation = str2sym(cellfun(@(r)createVarNameFcn('a',r),muscleSuffix,'UniformOutput',false));
 MuscleTorques = sym({'M_h','M_k','M_t'});
 
+maxMuscleForces = [1200*5, 1500*5, 3000*5, 3000*5, 2500, 3000];
 MuscleTorqueEquations = MuscleTorques.'-[muscleRadii(1,1) muscleRadii(1,2) -muscleRadii(1,3) -muscleRadii(1,4) 0 0;muscleRadii(2,1) 0 -muscleRadii(2,3) 0 0 0;0 0 0 0 muscleRadii(3,5) -muscleRadii(3,6) ]*(muscleActivation.*muscleForce).';
 MuscleTorqueEquations_P = subs(MuscleTorqueEquations,muscleRadii,repmat([0.081; 0.035;0.052],[1,6]));  %use same radii for now
-MuscleTorqueEquations_P = subs(MuscleTorqueEquations_P,muscleForce, [1200, 1500*4, 3000, 3000, 2500, 3000]);
+MuscleTorqueEquations_P = subs(MuscleTorqueEquations_P,muscleForce, maxMuscleForces);
 
 if true  %set to true if you want to regenerate the constraint functions for muscle optimization
     currdir = [pwd filesep]; % You might need to use currdir = pwd
@@ -214,7 +215,7 @@ for j=1:size(KautzData,1)
     objFunc = @(x) sum(x.^2) + sum(x);
     x0=zeros(1,6);
     options = optimoptions('fmincon','Algorithm','sqp');
-    lb=zeros(1,6);
+    lb=zeros(1,6)+0.1;
     ub=ones(1,6);
     [xval_activation,fval,exitflags(j),output,lambda,grad]=fmincon(objFunc,x0,[],[],[],[],lb,ub,@(x)constraint_MuscleOptimization([MuscleTorques,x]),options);
     for vv=1:length(muscleSuffix)
@@ -273,9 +274,10 @@ for vv = 1:numMuscles
     set(axCol1{vv},'FontSize',12)
     animatedLineCol{vv} = animatedline(axCol1{vv});
     xlim(axCol1{vv},[0,360]);
-    ylim(axCol1{vv},[0,1]);
+    ylim(axCol1{vv},[0,max(totalTable.(sprintf("Activation_%s",muscleSuffix{vv})))*maxMuscleForces(vv)]);
+    %ylim(axCol1{vv},[0,inf]);
     title(muscleNames{vv});
-    ylabel('Activation','FontSize',14,'FontWeight','bold');
+    ylabel('Force (N)','FontSize',14,'FontWeight','bold');
 
 
 end
@@ -298,7 +300,7 @@ for j=1:length(angles)
         
         activationV = totalTable.(sprintf("Activation_%s",muscleSuffix{v}));
         %plot(axCol1{v},angles(1:j),activationV(1:j));
-        addpoints(animatedLineCol{v},angles(j),activationV(j));
+        addpoints(animatedLineCol{v},angles(j),activationV(j).*maxMuscleForces(v)   );
     end
 
 
@@ -317,7 +319,7 @@ for j=1:length(angles)
     addpoints(aLine_foot,[posA(1);posT(1)],[posA(2);posT(2)]);
 
     drawnow limitrate;
-    pause(0.027);
+    pause(0.0027);
     frame = getframe(gcf); %get frame
     writeVideo(MuscleAVid, frame);
 
@@ -392,21 +394,65 @@ for vv = 1:numMuscles
 end
 xlabel(axCol1{6},'Crank Angle of Bicycle (deg)', 'FontSize',14,'FontWeight','bold');
 
-%%
-figure()
-tiledlayout(6,1)
-ax=nexttile;
-plot(ax,0:360,totalTable.Activation_RF)
-ax=nexttile;
-plot(ax,0:360,totalTable.Activation_IP)
-ax=nexttile;
-plot(ax,0:360,totalTable.Activation_G)
-ax=nexttile;
-plot(ax,0:360,totalTable.Activation_H)
-ax=nexttile;
-plot(ax,0:360,totalTable.Activation_TA)
-ax=nexttile;
-plot(ax,0:360,totalTable.Activation_GA)
+%% plot the activations side by side
+
+PrilutskyData = readtable("PrilutskyData_AdjustedActivation.csv");
+
+numMuscles = 6;
+fig=figure();
+set(gcf, 'Units', 'normalized');
+set(gcf, 'Position', [0 0.1 0.8 0.8]);
+set(gcf,'color','w');
+set(0, 'DefaultAxesFontName', 'Arial')
+tiledlayout(numMuscles,2);
+muscleNames = {'Rectus Femoris (RF)' 'Iliopsoas (IP)' 'Gluteals (G)' 'Hamstrings (H)' 'Tibialis Anterior (TA)' 'Gastrocnemius (GA)'};
+
+PrilutskyPos =[1,5,7,9,11];
+PrilutskyMuscles={"RF","GLM","HA","TA","GA"};
+numMuscles_Pri = 5;
+
+axColl = {};
+
+for vv = 1:numMuscles_Pri
+    axCol1{vv} = nexttile(PrilutskyPos(vv));
+    pT = PrilutskyData(strcmp(PrilutskyData.Muscle,PrilutskyMuscles{vv}),:);
+    activationV_P =interp1(pT.angle,pT.AdjustedActivation,angles,'linear') ;
+        %plot(axCol1{v},angles(1:j),activationV(1:j));
+    plot(axCol1{vv},angles,activationV_P/100,'k-');
+    ylabel(axCol1{vv} ,'Activation','FontSize',14,'FontWeight','bold');
+    title(PrilutskyMuscles{vv});
+
+    set(axCol1{vv},'FontSize',12)
+    xlim(axCol1{vv},[0,360]);
+    ylim(axCol1{vv},[0,max(activationV_P/100)*1.1]);
+
+
+end
+xlabel(axCol1{5},'Crank Angle of Bicycle (deg)', 'FontSize',14,'FontWeight','bold');
+
+
+
+
+axColl = {};
+
+for vv = 1:numMuscles
+    axCol1{vv} = nexttile((vv)*(2));
+    
+    
+    
+    activationV = totalTable.(sprintf("Activation_%s",muscleSuffix{vv}));
+        %plot(axCol1{v},angles(1:j),activationV(1:j));
+    plot(axCol1{vv},angles,activationV,'k-');
+    ylabel(axCol1{vv} ,'Activation','FontSize',14,'FontWeight','bold');
+    title(muscleNames{vv});
+
+    set(axCol1{vv},'FontSize',12)
+    xlim(axCol1{vv},[0,360]);
+    ylim(axCol1{vv},[0,max(activationV)]*1.1);
+
+
+end
+xlabel(axCol1{6},'Crank Angle of Bicycle (deg)', 'FontSize',14,'FontWeight','bold');
 
 
 
