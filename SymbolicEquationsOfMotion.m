@@ -120,7 +120,7 @@ muscleActivation = str2sym(cellfun(@(r)createVarNameFcn('a',r),muscleSuffix,'Uni
 MuscleTorques = sym({'M_h','M_k','M_t'});
 
 maxMuscleForces = [1200*5, 1500*5, 3000*5, 3000*5, 2500, 3000];
-MuscleTorqueEquations = MuscleTorques.'-[muscleRadii(1,1) muscleRadii(1,2) -muscleRadii(1,3) -muscleRadii(1,4) 0 0;muscleRadii(2,1) 0 -muscleRadii(2,3) 0 0 0;0 0 0 0 muscleRadii(3,5) -muscleRadii(3,6) ]*(muscleActivation.*muscleForce).';
+MuscleTorqueEquations = MuscleTorques.'-[muscleRadii(1,1) muscleRadii(1,2) -muscleRadii(1,3) -muscleRadii(1,4) 0 0;muscleRadii(2,1) 0 0 -muscleRadii(2,4)  0 0;0 0 0 0 muscleRadii(3,5) -muscleRadii(3,6) ]*(muscleActivation.*muscleForce).';
 MuscleTorqueEquations_P = subs(MuscleTorqueEquations,muscleRadii,repmat([0.081; 0.035;0.052],[1,6]));  %use same radii for now
 MuscleTorqueEquations_P = subs(MuscleTorqueEquations_P,muscleForce, maxMuscleForces);
 
